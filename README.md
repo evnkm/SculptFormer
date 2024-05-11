@@ -29,7 +29,7 @@ Some minor dependencies are also needed, for which the latest version provided b
 
 Two another steps to prepare the codebase:
 
-1. `git submodule update --init` to get [Neural Renderer](https://github.com/daniilidis-group/neural_renderer) ready.
+1. `git submodule update --init` to get [Neural Renderer](https://github.com/evnkm/neural_renderer) ready.
 2. `python setup.py install` in directory [external/chamfer](external/chamfer) and `external/neural_renderer` to compile the modules.
 
 ### Datasets
