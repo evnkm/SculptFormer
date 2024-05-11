@@ -139,10 +139,10 @@ int chamfer_cuda_forward(at::Tensor xyz1, at::Tensor xyz2, at::Tensor dist1, at:
     const auto n = xyz1.size(1); //num_points point cloud A
     const auto m = xyz2.size(1); //num_points point cloud B
 
-    NmDistanceKernel <<< dim3(32, 16, 1), 512 >>> (batch_size, n, xyz1.data<float>(), m,
-                                                   xyz2.data<float>(), dist1.data<float>(), idx1.data<int>());
-    NmDistanceKernel <<< dim3(32, 16, 1), 512 >>> (batch_size, m, xyz2.data<float>(), n,
-                                                   xyz1.data<float>(), dist2.data<float>(), idx2.data<int>());
+    NmDistanceKernel <<< dim3(32, 16, 1), 512 >>> (batch_size, n, xyz1.data_ptr<float>(), m,
+                                                   xyz2.data_ptr<float>(), dist1.data_ptr<float>(), idx1.data_ptr<int>());
+    NmDistanceKernel <<< dim3(32, 16, 1), 512 >>> (batch_size, m, xyz2.data_ptr<float>(), n,
+                                                   xyz1.data_ptr<float>(), dist2.data_ptr<float>(), idx2.data_ptr<int>());
 
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
@@ -181,12 +181,12 @@ int chamfer_cuda_backward(at::Tensor xyz1, at::Tensor xyz2, at::Tensor gradxyz1,
     const auto n = xyz1.size(1); // num_points point cloud A
     const auto m = xyz2.size(1); // num_points point cloud B
 
-    NmDistanceGradKernel <<< dim3(1, 16, 1), 256 >>> (batch_size, n, xyz1.data<float>(), m,
-                                                      xyz2.data<float>(), graddist1.data<float>(), idx1.data<int>(),
-                                                      gradxyz1.data<float>(), gradxyz2.data<float>());
-    NmDistanceGradKernel <<< dim3(1, 16, 1), 256 >>> (batch_size, m, xyz2.data<float>(), n,
-                                                      xyz1.data<float>(), graddist2.data<float>(), idx2.data<int>(),
-                                                      gradxyz2.data<float>(), gradxyz1.data<float>());
+    NmDistanceGradKernel <<< dim3(1, 16, 1), 256 >>> (batch_size, n, xyz1.data_ptr<float>(), m,
+                                                      xyz2.data_ptr<float>(), graddist1.data_ptr<float>(), idx1.data_ptr<int>(),
+                                                      gradxyz1.data_ptr<float>(), gradxyz2.data_ptr<float>());
+    NmDistanceGradKernel <<< dim3(1, 16, 1), 256 >>> (batch_size, m, xyz2.data_ptr<float>(), n,
+                                                      xyz1.data_ptr<float>(), graddist2.data_ptr<float>(), idx2.data_ptr<int>(),
+                                                      gradxyz2.data_ptr<float>(), gradxyz1.data_ptr<float>());
 
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
