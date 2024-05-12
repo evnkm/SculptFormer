@@ -45,6 +45,13 @@ model:
   last_hidden_dim: 192
   name: pixel2mesh
   z_threshold: 0
+  local_transformer_config:
+    d_model: 192
+    nhead: 8
+    num_layers: 6
+    dim_feedforward: 512
+    dropout: 0.1
+
 name: p2m
 num_gpus: 8
 num_workers: 16

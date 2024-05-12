@@ -19,11 +19,11 @@ class P2MModel(nn.Module):
         self.init_pts = nn.Parameter(ellipsoid.coord, requires_grad=False)
         self.gconv_activation = options.gconv_activation
 
-        # Encoder and Decoder from Backbone
+        # Initialize Encoder and Decoder from Backbone
         self.nn_encoder, self.nn_decoder = get_backbone(options)
         self.features_dim = self.nn_encoder.features_dim + self.coord_dim
 
-        # Graph Convolutional Networks
+        # Graph Convolutional Networks Initialization
         self.gcns = nn.ModuleList([
             GBottleneck(6, self.features_dim, self.hidden_dim, self.coord_dim,
                         ellipsoid.adj_mat[0], activation=self.gconv_activation),
@@ -33,6 +33,7 @@ class P2MModel(nn.Module):
                         ellipsoid.adj_mat[2], activation=self.gconv_activation)
         ])
 
+        # Unpooling layers
         self.unpooling = nn.ModuleList([
             GUnpooling(ellipsoid.unpool_idx[0]),
             GUnpooling(ellipsoid.unpool_idx[1])
@@ -42,16 +43,12 @@ class P2MModel(nn.Module):
         self.projection = GProjection(mesh_pos, camera_f, camera_c, bound=options.z_threshold,
                                       tensorflow_compatible=options.align_with_tensorflow)
 
-        # Graph Convolution
+        # Single Local Transformer
+        self.local_transformer = LocalTransformer(options.local_transformer_config)
+
+        # Graph Convolution Layer
         self.gconv = GConv(in_features=self.last_hidden_dim, out_features=self.coord_dim,
                            adj_mat=ellipsoid.adj_mat[2])
-
-        # Transformer Modules
-        self.global_transformer = GlobalTransformer(options.global_transformer_config)
-        self.local_transformers = nn.ModuleList([
-            LocalTransformer(options.local_transformer_config),
-            LocalTransformer(options.local_transformer_config)
-        ])
 
     def forward(self, img):
         batch_size = img.size(0)
@@ -65,17 +62,13 @@ class P2MModel(nn.Module):
         x1, x_hidden = self.gcns[0](x)
         x1_up = self.unpooling[0](x1)
 
-        # Apply Global Transformer
-        x = self.global_transformer(x1_up)
-
-        # First Local Transformer
-        x = self.local_transformers[0](x)
+        # Passing features through the single local transformer
+        x = self.local_transformer(x1_up)
         x2, x_hidden = self.gcns[1](x)
         x2_up = self.unpooling[1](x2)
 
-        # Second Local Transformer
-        x = self.local_transformers[1](x2_up)
-        x3, _ = self.gcns[2](x)
+        # Final Graph Convolution Network
+        x3, _ = self.gcns[2](x2_up)
         if self.gconv_activation:
             x3 = F.relu(x3)
         x3 = self.gconv(x3)
@@ -88,3 +81,4 @@ class P2MModel(nn.Module):
             "pred_coord_before_deform": [init_pts, x1_up, x2_up],
             "reconst": reconst
         }
+
