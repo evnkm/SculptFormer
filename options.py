@@ -55,6 +55,13 @@ options.model.z_threshold = 0
 # align with original tensorflow model
 # please follow experiments/tensorflow.yml
 options.model.align_with_tensorflow = False
+options.model.local_transformer_config = {
+    'd_model': 192,
+    'nhead': 8,
+    'num_layers': 6,
+    'dim_feedforward': 512,
+    'dropout': 0.1
+}
 
 options.loss = edict()
 options.loss.weights = edict()
